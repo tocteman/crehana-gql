@@ -1,0 +1,23 @@
+
+@import "tailwindcss/base";
+
+@import "tailwindcss/components";
+
+  h1 {
+    @apply text-3xl;
+  }
+  h2 {
+    @apply text-2xl;
+  }
+  h3 {
+    @apply text-xl;
+  }
+  p {
+    @apply mt-1;
+  }
+
+
+@import "tailwindcss/utilities";
+
+@import url("https://use.typekit.net/mwu8bpo.css");
+
