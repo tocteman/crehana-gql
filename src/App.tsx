@@ -24,9 +24,13 @@ function App() {
   return (
     <RecoilRoot>
       <ApolloProvider client={client}>
-        <div className="font-body flex">
-          <Main></Main>
-          <Details></Details>
+        <div className="font-body flex flex-col md:flex-row bg-purpureo-900">
+          <div className="border-r-2 border-t-4 border-b-4 border-purpureo-900 md:w-1/2">
+            <Main></Main>
+          </div>
+          <div className="border-l-2 border-t-4 border-b-4 border-purpureo-900 md:w-1/2">
+            <Details></Details>
+          </div>
         </div>
         </ApolloProvider>
     </RecoilRoot>

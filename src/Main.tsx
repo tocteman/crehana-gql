@@ -1,14 +1,13 @@
 import React, { FunctionComponent, useState } from "react"
-import debounce from "lodash.debounce";
 import {useQuery, gql} from "@apollo/client"
-import {useRecoilState} from "recoil" 
-import { currentJob, cityNameFilter, companyNameFilter, titleFilter, sliceRange } from "./store/atoms";
+import {useRecoilValue, useRecoilState} from "recoil" 
+import { currentJob, cityNameFilter, companyNameFilter, titleFilter, sliceRange, currentJobCount } from "./store/atoms";
 import CityNameFilterInput from "./components/CityNameFilterInput";
 import CompanyNameFilterInput from "./components/CompanyNameFilterInput";
-import {Company, City, Job} from "./Types"
-
-
-
+import TitleFilterInput from "./components/TitleFilterInput"
+import Paginator from "./components/Paginator"
+import Loader from "./components/Loader"
+import {City, Job} from "./Types"
 
 const JOBS_QUERY=gql`
 query{
@@ -38,29 +37,15 @@ query{
 
 const Main: FunctionComponent = () => {
 
-  const [companyNameFiltered, setCompanyFilter] = useRecoilState(companyNameFilter)
-  const [cityNameFiltered, setCityFilter] = useRecoilState(cityNameFilter)
-  const [titleFiltered, setTitleFilter] = useRecoilState(titleFilter)
   const {data, loading, error} = useQuery(JOBS_QUERY, {});
-
-
-
+  const companyNameFiltered = useRecoilValue(companyNameFilter)
+  const cityNameFiltered = useRecoilValue(cityNameFilter)
+  const titleFiltered = useRecoilValue(titleFilter)
+  const sliced = useRecoilValue(sliceRange)
   const [selectedJob, setSelectedJob] = useRecoilState(currentJob)
-  const [sliced, setSlice] = useRecoilState(sliceRange)
-  const [filterConditions, setFilterConditions] = useState(null)
+  const [jobCount, setJobCount] = useRecoilState(currentJobCount)
 
-
-
-  const setWordFilter = (eventData:string) => {
-
-  }
-
-  const debouncedChange = debounce(eventData => console.log(eventData), 250);
-
-  const handleChange = (e:string|null) => {
-      debouncedChange(e);
-      
-  }
+  if (!data || loading || error) return <Loader/>
 
   const getCompanies = (retrivedJobs:Job[]) => {
     const retrievedCompanies = retrivedJobs.map((job:Job)=> (job.company.name))
@@ -68,8 +53,6 @@ const Main: FunctionComponent = () => {
     return Array.from(companies).sort()
   }
   
-  if (!data) return <div>fetching</div>
-
   const getCities = (retrivedJobs:Job[]) => {
     const currentCitiesArrayed = retrivedJobs
     .map((job:Job)=>(job.cities))
@@ -79,7 +62,9 @@ const Main: FunctionComponent = () => {
     return Array.from(cities).sort()
   }
   
+  
   let currentData = data.jobs
+
     if (companyNameFiltered.length>0){
       currentData =  currentData.filter(
         (job:Job) => job.company.name === companyNameFiltered)
@@ -95,43 +80,60 @@ const Main: FunctionComponent = () => {
     }
 
     if (titleFiltered.length>0){
-
+      currentData = currentData.filter(
+        (job:Job) => 
+          job.title.toLowerCase().replace(" ", "")
+          .includes(
+            titleFiltered.toLowerCase().replace(" ", "")
+          )
+      )
     }
-    
 
+    setJobCount(currentData.length)
     const slicedData = currentData.slice(sliced.from, sliced.to)
   
 
    return (
-
-     <div className="font-sans w-1/2">
-       <div>
-
-       <input
-        onChange={(e) => handleChange(e.target.value)}
-       ></input>
-       
+    <div className="w-full bg-purpureo-700">
+      <div className="p-12 max-w-xl mx-auto">
+        
+        <div>
+          <h1
+          className="my-8 font-bold text-tangerine-200 cursor-pointer hover:underline hover:text-white"
+          onClick={()=> setSelectedJob({slug: "", company: {slug: ""}})}
+          >
+            gqljobs
+          </h1>
        </div>
-
+       <div className="my-2">
+        <TitleFilterInput/>
+      </div>
+      <div className="my-2 flex flex-col md:flex-row w-full justify-between">
         <CityNameFilterInput cities={getCities(data.jobs)}/>
-        <CompanyNameFilterInput companies={getCities(data.jobs)}/>
-  
+        <CompanyNameFilterInput companies={getCompanies(data.jobs)}/>
+      </div>
+
+      <hr className="border-2 border-purpureo-900 my-8"></hr>
+
       {slicedData.map((job:Job) => (
         <div key={job.id}
-          className="mt-8"
+          className="mt-8 my-4 px-4 py-3 rounded-lg shadow bg-purpureo-900 cursor-pointer border-2 border-black hover:border-tangerine-200 hover:shadow-lg"
           onClick={()=> setSelectedJob({slug: job.slug, company: {slug: job.company.slug}})}
         >
           <h2 className="font-bold text-xl bg-white leading-tight">{job.title}</h2>
-          <p className=" leading-tight">{job.company.name}</p>
+          <div className="flex justify-between items-baseline my-1">
+            <p className="text-purple-300 leading-tight text-lg">{job.company.name}</p>
             {job.cities.map((city:City)=>(
-              <p className=" leading-tight">{city.name}</p>
-          ))}
-      </div>
+              <p className="text-tangerine-200 leading-tight">{city.name}</p>
+            ))}
+          </div>
+        </div>
       ))}
-      <div onClick={()=> setSlice({from: sliced.from-5, to: sliced.to-5})}>Anterior</div>
-      <div onClick={()=>setSlice({from: sliced.from+5,
-      to: sliced.to+5})}>Siguiente</div>
-    /</div>
+     
+      <Paginator/>
+
+      </div>
+    </div>
    )
 }
 

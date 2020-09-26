@@ -24,3 +24,8 @@ export const sliceRange = atom({
   key: "SLICE RANGE",
   default: {from: 0, to: 5}
 })
+
+export const currentJobCount = atom({
+  key: "CURRENT JOB COUNT",
+  default: 0
+})
