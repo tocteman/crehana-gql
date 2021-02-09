@@ -5,8 +5,6 @@ export type CompanyNameInputProps = {
   companies: any[]
 }
 
-
-
 export interface Company {
   name: string,
   id: string,
